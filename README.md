@@ -1,31 +1,28 @@
-📱 IoT Light Monitor
-IoT Light Monitor est une application Android native permettant de surveiller en temps réel l'état de luminosité de capteurs distants via une API REST. Elle intègre un système d'alerte intelligent basé sur des plages horaires configurables.
+# 📱 IoT Light Monitor
 
-🚀 Fonctionnalités Principales
-1. Dashboard en temps réel
+**IoT Light Monitor** est une application Android native conçue pour surveiller en temps réel l'intensité lumineuse de capteurs distants via l'API REST de l'IoT Lab. Elle allie un dashboard moderne et un système d'alerte intelligent automatisé.
 
-Affichage dynamique : Liste des capteurs actifs avec leurs valeurs relevées en Lux.
+---
 
-Mise en évidence visuelle : Les capteurs détectant une lumière active (seuil > 200 Lux) sont mis en évidence en jaune.
+## 🚀 Fonctionnalités Principales
 
-Filtrage intelligent : Un switch permet d'afficher uniquement les capteurs allumés.
+### 1. Dashboard Intelligent
+* **Visualisation Temps Réel :** Liste complète des capteurs avec conversion des données JSON en affichage lisible (ID du mote, type et valeur en Lux).
+* **Indicateurs Visuels :** Changement de couleur dynamique des cartes (Jaune pour "Allumé", Gris pour "Éteint") basé sur un seuil de **200 Lux**.
+* **Filtrage Rapide :** Un switch permet d'isoler instantanément les capteurs détectant de la lumière.
+* **Interface Moderne :** Utilisation d'un `Floating Action Button` (FAB) pour les réglages et d'un `SwipeRefreshLayout` pour actualiser les données manuellement.
 
-Détails avancés : Un clic sur un capteur ouvre un "Bottom Sheet" élégant affichant l'historique et les détails techniques.
 
-2. Système de Surveillance & Alertes
 
-L'application utilise un service d'arrière-plan (Foreground Service) pour interroger l'API toutes les 30 secondes, même lorsque l'application est fermée.
+### 2. Service de Surveillance (Arrière-plan)
+L'application intègre un `Foreground Service` qui assure une veille constante toutes les 30 secondes, même si l'application est fermée ou si le téléphone est verrouillé.
 
-Notifications (Semaine 19h-23h) : Émission d'une notification système si une nouvelle lumière est allumée.
+* **Notifications :** Alerte visuelle et vibratoire en cas de détection lumineuse en semaine (19h-23h).
+* **Alertes Emails :** Envoi automatique d'emails pour les événements critiques (Nuit de 23h à 06h ou durant le weekend).
+* **Auto-Start :** Grâce au `BootReceiver`, la surveillance reprend automatiquement dès le démarrage du smartphone.
 
-Alertes Email (Weekend ou Nuit) : Envoi automatique d'un email si un événement survient le weekend (19h-23h) ou en semaine durant la nuit (23h-06h).
-
-Persistance : Grâce au BootReceiver, la surveillance redémarre automatiquement après un reboot du téléphone.
-
-3. Configuration Personnalisée
-
-Un menu dédié (accessible via un bouton flottant ergonomique) permet de configurer l'application selon vos besoins :
-
-Saisie de l'adresse email de destination des alertes.
-
-Modification des plages horaires de surveillance pour la semaine, le weekend et la nuit.
+### 3. Panneau de Configuration
+Une interface de réglages dédiée permet de personnaliser l'expérience :
+* Configuration de l'adresse email cible.
+* Ajustement des plages horaires de surveillance.
+* **Navigation Fluide :** Transition animée "Slide-to-right" pour revenir au dashboard.
