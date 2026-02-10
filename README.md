@@ -29,13 +29,3 @@ Une interface de réglages dédiée, accessible via un **bouton flottant (FAB)**
 * **Configuration :** Saisie de l'adresse email cible et ajustement des plages horaires de surveillance.
 * **Navigation Fluide :** Transition animée "Slide-to-right" pour revenir au dashboard (le panneau de réglages glisse vers la droite pour révéler l'accueil).
 * **Détails des Capteurs :** Un clic sur un élément de la liste déploie un volet d'information (Bottom Sheet) sans changer de page.
-
-
-
----
-
-## 🛠 Architecture Technique
-L'application utilise un `CoordinatorLayout` pour permettre au bouton de réglages de remonter automatiquement lors de l'ouverture des détails d'un capteur, garantissant ainsi qu'aucun élément interactif ne soit masqué.
-
----
-*Projet réalisé en 2026 - Surveillance IoT Intelligente*
