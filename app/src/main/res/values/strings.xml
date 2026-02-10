@@ -1,3 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
 <resources>
-    <string name="app_name">Projet</string>
+    <string name="app_name">IoT Light Monitor</string>
+    <string name="action_settings">Paramètres</string>
+
+    <!-- Interface principale -->
+    <string name="dashboard_title">Dashboard IoT</string>
+    <string name="service_on">Service ON</string>
+    <string name="service_off">Service OFF</string>
+    <string name="filter_lights_on">Allumés uniquement</string>
+    <string name="refresh_hint">Glissez vers le bas pour actualiser</string>
+
+    <!-- Détails capteur -->
+    <string name="sensor_details_title">Détails Capteur</string>
+    <string name="state_on">État : ALLUMÉ 💡</string>
+    <string name="state_off">État : Éteint 🌑</string>
+
+    <!-- Préférences -->
+    <string name="pref_email_title">Adresse Email</string>
+    <string name="pref_email_summary">Entrez votre adresse email pour les alertes</string>
+    <string name="pref_time_weekday_title">Horaires semaine (notification)</string>
+    <string name="pref_time_weekend_title">Horaires weekend (email)</string>
+    <string name="pref_time_night_title">Horaires nuit (email)</string>
+
+    <!-- Notifications -->
+    <string name="notif_light_detected">💡 Lumière détectée</string>
+    <string name="notif_channel_name">Détection de lumières</string>
+    <string name="notif_channel_desc">Notifications pour les détections de lumières actives</string>
+
+    <!-- Messages -->
+    <string name="service_started">Service de surveillance démarré</string>
+    <string name="service_stopped">Service de surveillance arrêté</string>
+    <string name="network_error">Erreur Réseau</string>
+    <string name="json_error">Erreur JSON</string>
 </resources>

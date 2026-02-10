@@ -1,8 +1,10 @@
 package com.example.projet;
 
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.graphics.Color; // N'est plus très utilisé grâce à colors.xml mais on garde au cas où
+import android.content.IntentFilter;
+import android.os.Build;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -15,11 +17,11 @@ import android.widget.TextView;
 import android.widget.ToggleButton;
 import android.widget.Toast;
 
-// IMPORT IMPORTANT POUR LE NOUVEAU POPUP
 import com.google.android.material.bottomsheet.BottomSheetDialog;
-import androidx.cardview.widget.CardView; // Pour la pastille de couleur
+import com.google.android.material.floatingactionbutton.FloatingActionButton;
+import androidx.cardview.widget.CardView;
 import androidx.appcompat.app.AppCompatActivity;
-import androidx.core.content.ContextCompat; // Pour récupérer les couleurs proprement
+import androidx.core.content.ContextCompat;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import org.json.JSONArray;
@@ -29,7 +31,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.net.HttpURLConnection;
 import java.net.URL;
-import java.text.SimpleDateFormat; // Pour la date
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -41,28 +43,32 @@ public class MainActivity extends AppCompatActivity {
     private ListView listSensors;
     private SwipeRefreshLayout swipeRefreshLayout;
     private Switch switchFilter;
+    private ToggleButton toggleButton;
+    private FloatingActionButton fabSettings; // Nouveau bouton rond
 
     private SensorAdapter adapter;
     private ArrayList<JSONObject> allSensorsList = new ArrayList<>();
     private ArrayList<JSONObject> displayedList = new ArrayList<>();
 
-    // SEUIL (Pourra être déplacé dans les paramètres plus tard)
     private static final double SEUIL_LUMIERE = 200.0;
     private static final String URL_IOT_ALL = "http://iotlab.telecomnancy.eu:8080/iotlab/rest/data/1/light1/last";
+
+    private BroadcastReceiver serviceReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main);
 
-        // --- Init Views ---
+        // --- Initialisation des Vues ---
         tvStatus = findViewById(R.id.tv_status);
         listSensors = findViewById(R.id.list_sensors);
         swipeRefreshLayout = findViewById(R.id.swipe_refresh);
         switchFilter = findViewById(R.id.switch_filter);
-        ToggleButton toggleButton = findViewById(R.id.toggle_service);
+        toggleButton = findViewById(R.id.toggle_service);
+        fabSettings = findViewById(R.id.fab_settings); // Liaison du FAB
 
-        // --- Init Adapter ---
+        // --- Configuration de l'Adapter ---
         adapter = new SensorAdapter(this, displayedList);
         listSensors.setAdapter(adapter);
 
@@ -71,57 +77,95 @@ public class MainActivity extends AppCompatActivity {
 
         switchFilter.setOnCheckedChangeListener((buttonView, isChecked) -> mettreAJourListeFiltree());
 
-        // Clic sur un item -> Ouvre le nouveau BottomSheet
         listSensors.setOnItemClickListener((parent, view, position, id) -> {
             JSONObject sensor = displayedList.get(position);
             afficherDetails(sensor);
         });
 
+        // Toggle du service (Foreground Service pour Android 14)
         toggleButton.setOnCheckedChangeListener((buttonView, isChecked) -> {
             Intent intent = new Intent(MainActivity.this, MainService.class);
             if (isChecked) {
-                startService(intent);
-                Toast.makeText(this, "Service démarré", Toast.LENGTH_SHORT).show();
+                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+                    startForegroundService(intent);
+                } else {
+                    startService(intent);
+                }
+                Toast.makeText(this, "Surveillance activée", Toast.LENGTH_SHORT).show();
             } else {
                 stopService(intent);
-                Toast.makeText(this, "Service arrêté", Toast.LENGTH_SHORT).show();
+                Toast.makeText(this, "Surveillance arrêtée", Toast.LENGTH_SHORT).show();
             }
         });
 
-        // Chargement initial
-        swipeRefreshLayout.setRefreshing(true); // Montre le chargement au démarrage
+        // ACTION DU BOUTON ROND (RÉGLAGES)
+        fabSettings.setOnClickListener(v -> {
+            Intent intent = new Intent(MainActivity.this, SettingsActivity.class);
+            startActivity(intent);
+        });
+
+        setupBroadcastReceiver();
+
+        // Premier chargement
+        swipeRefreshLayout.setRefreshing(true);
         recupererDonnees();
     }
 
-    // --- Logique Réseau (Inchangée) ---
+    private void setupBroadcastReceiver() {
+        serviceReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (MainService.ACTION_RESULT.equals(intent.getAction())) {
+                    String jsonData = intent.getStringExtra("data");
+                    if (jsonData != null) {
+                        traiterReponseJSON(jsonData);
+                    }
+                }
+            }
+        };
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        IntentFilter filter = new IntentFilter(MainService.ACTION_RESULT);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+            registerReceiver(serviceReceiver, filter, Context.RECEIVER_NOT_EXPORTED);
+        } else {
+            registerReceiver(serviceReceiver, filter);
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        try {
+            unregisterReceiver(serviceReceiver);
+        } catch (Exception e) { /* Ignoré */ }
+    }
+
+    // --- RÉSEAU ET DONNÉES ---
+
     private void recupererDonnees() {
         new Thread(() -> {
             try {
                 URL url = new URL(URL_IOT_ALL);
-                HttpURLConnection urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.setRequestMethod("GET");
-                urlConnection.setConnectTimeout(5000);
+                HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+                conn.setRequestMethod("GET");
 
-                BufferedReader in = new BufferedReader(new InputStreamReader(urlConnection.getInputStream()));
-                String inputLine;
+                BufferedReader in = new BufferedReader(new InputStreamReader(conn.getInputStream()));
                 StringBuilder content = new StringBuilder();
-                while ((inputLine = in.readLine()) != null) {
-                    content.append(inputLine);
-                }
+                String line;
+                while ((line = in.readLine()) != null) content.append(line);
                 in.close();
-                urlConnection.disconnect();
-
-                final String jsonResponse = content.toString();
 
                 runOnUiThread(() -> {
-                    traiterReponseJSON(jsonResponse);
+                    traiterReponseJSON(content.toString());
                     swipeRefreshLayout.setRefreshing(false);
                 });
-
             } catch (Exception e) {
-                e.printStackTrace();
                 runOnUiThread(() -> {
-                    tvStatus.setText("Erreur Réseau : " + e.getMessage());
+                    tvStatus.setText("Erreur réseau");
                     swipeRefreshLayout.setRefreshing(false);
                 });
             }
@@ -138,84 +182,55 @@ public class MainActivity extends AppCompatActivity {
                 allSensorsList.clear();
                 for (int i = 0; i < dataArray.length(); i++) {
                     JSONObject item = dataArray.getJSONObject(i);
-                    // Filtre sur les lumières uniquement
                     if (item.optString("label", "").contains("light")) {
                         allSensorsList.add(item);
                     }
                 }
                 mettreAJourListeFiltree();
-                SimpleDateFormat sdf = new SimpleDateFormat("HH:mm:ss", Locale.getDefault());
-                tvStatus.setText("Dernière maj : " + sdf.format(new Date()));
+                tvStatus.setText("Maj : " + new SimpleDateFormat("HH:mm:ss", Locale.getDefault()).format(new Date()));
             }
         } catch (Exception e) {
-            tvStatus.setText("Erreur JSON");
             e.printStackTrace();
         }
     }
 
     private void mettreAJourListeFiltree() {
         displayedList.clear();
-        boolean filtreActif = switchFilter.isChecked();
-
-        for (JSONObject sensor : allSensorsList) {
-            double value = sensor.optDouble("value", 0.0);
-            if (filtreActif) {
-                if (value > SEUIL_LUMIERE) displayedList.add(sensor);
-            } else {
-                displayedList.add(sensor);
+        boolean filtre = switchFilter.isChecked();
+        for (JSONObject s : allSensorsList) {
+            if (!filtre || s.optDouble("value", 0.0) > SEUIL_LUMIERE) {
+                displayedList.add(s);
             }
         }
         adapter.notifyDataSetChanged();
     }
 
-    // --- NOUVELLE MÉTHODE D'AFFICHAGE DES DÉTAILS (BottomSheet) ---
     private void afficherDetails(JSONObject sensor) {
-        // 1. Créer le dialogue
-        BottomSheetDialog bottomSheetDialog = new BottomSheetDialog(this);
-
-        // 2. Charger le nouveau layout stylé
+        BottomSheetDialog dialog = new BottomSheetDialog(this);
         View view = LayoutInflater.from(this).inflate(R.layout.dialog_sensor_details, null);
-        bottomSheetDialog.setContentView(view);
+        dialog.setContentView(view);
 
-        // 3. Récupérer les vues du layout
         TextView tvTitle = view.findViewById(R.id.detail_title);
-        TextView tvValueBig = view.findViewById(R.id.detail_value_big);
+        TextView tvValue = view.findViewById(R.id.detail_value_big);
         TextView tvStatusText = view.findViewById(R.id.detail_status_text);
-        TextView tvType = view.findViewById(R.id.detail_type);
-        TextView tvTime = view.findViewById(R.id.detail_time);
-        ImageView iconBig = view.findViewById(R.id.detail_icon);
 
-        // 4. Extraire les données
-        String mote = sensor.optString("mote", "?");
-        String label = sensor.optString("label", "?");
-        double value = sensor.optDouble("value", 0.0);
-        long timestamp = sensor.optLong("timestamp", System.currentTimeMillis());
+        double val = sensor.optDouble("value", 0.0);
+        tvTitle.setText("Capteur " + sensor.optString("mote", "?"));
+        tvValue.setText(String.format(Locale.getDefault(), "%.1f Lux", val));
 
-        // 5. Formater les données
-        tvTitle.setText("Capteur " + mote);
-        tvValueBig.setText(String.format(Locale.getDefault(), "%.1f Lux", value));
-        tvType.setText("Type : " + label);
-
-        // Formater la date (Timestamp -> Heure lisible)
-        SimpleDateFormat sdf = new SimpleDateFormat("dd/MM/yyyy à HH:mm:ss", Locale.getDefault());
-        tvTime.setText("Relevé : " + sdf.format(new Date(timestamp)));
-
-        // Gestion de l'état (Couleur et texte)
-        if (value > SEUIL_LUMIERE) {
+        if (val > SEUIL_LUMIERE) {
             tvStatusText.setText("État : ALLUMÉ 💡");
             tvStatusText.setTextColor(ContextCompat.getColor(this, R.color.state_on));
-            tvValueBig.setTextColor(ContextCompat.getColor(this, R.color.state_on));
         } else {
             tvStatusText.setText("État : Éteint 🌑");
             tvStatusText.setTextColor(ContextCompat.getColor(this, R.color.text_secondary));
-            tvValueBig.setTextColor(ContextCompat.getColor(this, R.color.text_primary));
         }
 
-        // 6. Afficher
-        bottomSheetDialog.show();
+        dialog.show();
     }
 
-    // --- Adapter Modernisé ---
+    // --- ADAPTER ---
+
     private class SensorAdapter extends ArrayAdapter<JSONObject> {
         public SensorAdapter(Context context, List<JSONObject> sensors) {
             super(context, 0, sensors);
@@ -228,33 +243,16 @@ public class MainActivity extends AppCompatActivity {
             }
 
             JSONObject sensor = getItem(position);
+            CardView card = convertView.findViewById(R.id.sensor_status_card);
+            TextView name = convertView.findViewById(R.id.sensor_name);
+            TextView valTxt = convertView.findViewById(R.id.sensor_value);
 
-            TextView nameView = convertView.findViewById(R.id.sensor_name);
-            TextView labelView = convertView.findViewById(R.id.sensor_label);
-            TextView valueView = convertView.findViewById(R.id.sensor_value);
-            // Utilisation de CardView pour la pastille ronde
-            CardView statusCard = convertView.findViewById(R.id.sensor_status_card);
+            double val = sensor.optDouble("value", 0.0);
+            name.setText("Capteur " + sensor.optString("mote", ""));
+            valTxt.setText(String.format(Locale.getDefault(), "%.0f Lux", val));
 
-            try {
-                String moteId = sensor.optString("mote", "Inconnu");
-                String label = sensor.optString("label", "light");
-                double value = sensor.optDouble("value", 0.0);
-
-                nameView.setText("Capteur " + moteId);
-                labelView.setText(label);
-                valueView.setText(String.format(Locale.getDefault(), "%.0f Lux", value)); // %.0f pour pas de décimale dans la liste
-
-                if (value > SEUIL_LUMIERE) {
-                    // Allumé : Jaune
-                    statusCard.setCardBackgroundColor(ContextCompat.getColor(getContext(), R.color.state_on));
-                    valueView.setTextColor(ContextCompat.getColor(getContext(), R.color.state_on));
-                } else {
-                    // Éteint : Gris
-                    statusCard.setCardBackgroundColor(ContextCompat.getColor(getContext(), R.color.state_off));
-                    valueView.setTextColor(ContextCompat.getColor(getContext(), R.color.text_primary));
-                }
-
-            } catch (Exception e) { e.printStackTrace(); }
+            int color = (val > SEUIL_LUMIERE) ? R.color.state_on : R.color.state_off;
+            card.setCardBackgroundColor(ContextCompat.getColor(getContext(), color));
 
             return convertView;
         }

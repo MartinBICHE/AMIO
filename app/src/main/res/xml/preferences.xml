@@ -1,0 +1,68 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <PreferenceCategory
+        android:title="Configuration Email"
+        android:summary="Adresse email pour les alertes">
+
+        <EditTextPreference
+            android:key="email"
+            android:title="Adresse Email"
+            android:summary="Entrez votre adresse email"
+            android:dialogTitle="Adresse Email"
+            android:inputType="textEmailAddress" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="Plages Horaires - Semaine"
+        android:summary="Configuration pour les jours de semaine">
+
+        <EditTextPreference
+            android:key="heure_debut_semaine"
+            android:title="Début soirée (notification)"
+            android:summary="Heure de début (défaut: 19h)"
+            android:dialogTitle="Heure de début"
+            android:inputType="number"
+            android:defaultValue="19" />
+
+        <EditTextPreference
+            android:key="heure_fin_semaine"
+            android:title="Fin soirée (notification)"
+            android:summary="Heure de fin (défaut: 23h)"
+            android:dialogTitle="Heure de fin"
+            android:inputType="number"
+            android:defaultValue="23" />
+
+        <EditTextPreference
+            android:key="heure_debut_nuit"
+            android:title="Début nuit (email)"
+            android:summary="Heure de début (défaut: 23h)"
+            android:dialogTitle="Heure de début nuit"
+            android:inputType="number"
+            android:defaultValue="23" />
+
+        <EditTextPreference
+            android:key="heure_fin_nuit"
+            android:title="Fin nuit (email)"
+            android:summary="Heure de fin (défaut: 6h)"
+            android:dialogTitle="Heure de fin nuit"
+            android:inputType="number"
+            android:defaultValue="6" />
+    </PreferenceCategory>
+
+    <PreferenceCategory
+        android:title="Informations"
+        android:summary="À propos de l'application">
+
+        <Preference
+            android:title="Version"
+            android:summary="Application AMIO - TP3"
+            android:selectable="false" />
+
+        <Preference
+            android:title="Fonctionnement"
+            android:summary="Notification en semaine 19h-23h\nEmail le weekend 19h-23h et la nuit 23h-6h"
+            android:selectable="false" />
+    </PreferenceCategory>
+
+</PreferenceScreen>

@@ -1,66 +1,85 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<androidx.coordinatorlayout.widget.CoordinatorLayout
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:padding="16dp"
     android:background="#F5F5F5">
-
-    <TextView
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="Dashboard IoT"
-        android:textSize="24sp"
-        android:textStyle="bold"
-        android:layout_marginBottom="10dp"
-        android:textColor="#333333"/>
 
     <LinearLayout
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center_vertical"
-        android:layout_marginBottom="10dp">
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:padding="16dp">
 
-        <ToggleButton
-            android:id="@+id/toggle_service"
-            android:layout_width="0dp"
+        <TextView
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_weight="1"
-            android:textOn="Service ON"
-            android:textOff="Service OFF"
-            android:layout_marginEnd="8dp"/>
+            android:text="Dashboard IoT"
+            android:textSize="24sp"
+            android:textStyle="bold"
+            android:layout_marginBottom="10dp"
+            android:textColor="#333333"/>
 
-        <Switch
-            android:id="@+id/switch_filter"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Allumés uniquement "
-            android:layout_marginStart="8dp"/>
+            android:orientation="horizontal"
+            android:gravity="center_vertical"
+            android:layout_marginBottom="10dp">
+
+            <ToggleButton
+                android:id="@+id/toggle_service"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textOn="Service ON"
+                android:textOff="Service OFF"
+                android:layout_marginEnd="8dp"/>
+
+            <Switch
+                android:id="@+id/switch_filter"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="Allumés uniquement "
+                android:layout_marginStart="8dp"/>
+        </LinearLayout>
+
+        <TextView
+            android:id="@+id/tv_status"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Glissez vers le bas pour actualiser"
+            android:gravity="center"
+            android:layout_marginBottom="10dp"
+            android:textStyle="italic"
+            android:textColor="#888888"/>
+
+        <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+            android:id="@+id/swipe_refresh"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent">
+
+            <ListView
+                android:id="@+id/list_sensors"
+                android:layout_width="match_parent"
+                android:layout_height="match_parent"
+                android:divider="#E0E0E0"
+                android:dividerHeight="1dp"/>
+
+        </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
     </LinearLayout>
 
-    <TextView
-        android:id="@+id/tv_status"
-        android:layout_width="match_parent"
+    <com.google.android.material.floatingactionbutton.FloatingActionButton
+        android:id="@+id/fab_settings"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Glissez vers le bas pour actualiser"
-        android:gravity="center"
-        android:layout_marginBottom="10dp"
-        android:textStyle="italic"
-        android:textColor="#888888"/>
+        android:layout_gravity="bottom|end"
+        android:layout_margin="24dp"
+        android:src="@android:drawable/ic_menu_preferences"
+        app:backgroundTint="#00796B"
+        app:tint="@android:color/white"
+        app:elevation="6dp"
+        android:contentDescription="Ouvrir les réglages" />
 
-    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
-        android:id="@+id/swipe_refresh"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent">
-
-        <ListView
-            android:id="@+id/list_sensors"
-            android:layout_width="match_parent"
-            android:layout_height="match_parent"
-            android:divider="#E0E0E0"
-            android:dividerHeight="1dp"/>
-
-    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
-
-</LinearLayout>
+</androidx.coordinatorlayout.widget.CoordinatorLayout>
